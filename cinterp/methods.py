@@ -1,4 +1,5 @@
 import numpy as np
+import itertools
 
 def dilate(x):
     y = np.logical_or(x, np.roll(x, 1, axis=0))
@@ -92,3 +93,54 @@ def cinterp(z, aa, rr, cells):
         
     return z_interp
 
+
+def pos2cell(pos, a, r, ta=0.5, tr=0.03):
+    cells = []
+    for p in pos:
+        ma = abs(a - p[0]) <= ta
+        for ia in a[ma]:
+            mr = abs(r - p[1]) <= tr
+            for ir in r[mr]:
+                cells.append((ia, ir))
+                #print('{:.3f} -> {:.3f}'.format(ir, abs(ir - p[1])))
+    return cells
+
+def pos2cellid(pos, a, r, ta=0.5, tr=0.06):
+    cells = []
+    na = len(a)
+    nr = len(r)
+    for p in pos:
+        for ia in list(itertools.compress(range(na), abs(a - p[0]) < ta)):
+            for ir in list(itertools.compress(range(nr), abs(r - p[1]) < tr)):
+                cells.append((ia, ir))
+    return cells
+
+def mask2tags(mask):
+    c = np.zeros(mask.shape, dtype=int)
+    k = 10
+    for ia in range(mask.shape[0]):
+        for ir in range(mask.shape[1]):
+            if mask[ia, ir]:
+                if c[ia - 1, ir]:
+                    c[ia, ir] = c[ia - 1, ir]
+                    if c[ia, ir - 1]:
+                        c[c == c[ia, ir - 1]] = c[ia - 1, ir]
+                elif c[ia, ir - 1]:
+                    c[ia, ir] = c[ia, ir - 1]
+                else:
+                    c[ia, ir] = k
+                    k += 1
+    # Check first azimuth once more for wrap-around continuity
+    ia = 0
+    for ir in range(mask.shape[1]):
+        if mask[-1, ir] and mask[0, ir]:
+            c[c == c[-1, ir]] = c[0, ir]
+    
+    # Relabel them so they are in 0, 1, 2, ...
+    k = 1
+    for t in np.unique(c):
+        if t > 0:
+            c[c == t] = k
+            k += 1
+            
+    return c
