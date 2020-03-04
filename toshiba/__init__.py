@@ -10,9 +10,13 @@ def read(filename, maxgate=2048, verbose=0):
     fid = netCDF4.Dataset(filename, 'r')
 
     # Attributes, dimensions, and variables
-    # atts = fid.ncattrs()
-    # ds = [d for d in fid.dimensions]
-    # vs = [v for v in fid.variables]
+    if verbose:
+        atts = fid.ncattrs()
+        print(atts)
+        ds = [d for d in fid.dimensions]
+        print(ds)
+        vs = [v for v in fid.variables]
+        print(vs)
 
     # Get the variables that I care about
     lat = float(fid.variables['siteLat'][0])
@@ -29,8 +33,9 @@ def read(filename, maxgate=2048, verbose=0):
     ng = min(maxgate, zz.shape[1])
     rr = np.arange(r0, ng * dr, dr)
 
-    m = np.array(zz.mask, dtype=np.bool)[:, :maxgate]
-    z = np.array(zz[:, :maxgate])
+    z = np.array(zz)[:, :maxgate]
+    m = z == zz._FillValue
+    # z = z * zz.scale_factor + zz.add_offset
     v = np.zeros(z.shape)
     z[m] = np.nan
     v[m] = np.nan
