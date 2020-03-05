@@ -144,3 +144,43 @@ def mask2tags(mask):
             k += 1
             
     return c
+
+def mask2cells(mask):
+    r = np.where(mask)
+    cells = list(zip(r[0], r[1]))
+    return cells
+
+def cinterp_tags(z, a, r, tags):
+    dr = 0.5 * (r[1] - r[0])
+    tt = np.unique(tags)
+    z_interp = z.copy()
+
+    print(tt[tt > 0])
+    for t in tt[tt > 0]:
+        mask = tags == t
+        dmask = dilate(mask)
+        gmask = dmask ^ mask
+
+        sub_cells = mask2cells(gmask)
+        c = np.array(sub_cells)
+        a_good = a[c[:, 0]]
+        r_good = r[c[:, 1]]
+        x_good = r_good * np.sin(a_good)
+        y_good = r_good * np.cos(a_good)
+
+        z_good = z[gmask]
+
+        sub_cells = mask2cells(mask)
+        c = np.array(sub_cells)
+        a_bad = a[c[:, 0]]
+        r_bad = r[c[:, 1]]
+        x_bad = r_bad * np.sin(a_bad)
+        y_bad = r_bad * np.cos(a_bad)
+
+        for k, ii in enumerate(sub_cells):
+            dx = x_bad[k] - x_good
+            dy = y_bad[k] - y_good    
+            w = 1.0 / np.sqrt(dx * dx + dy * dy)
+            z_interp[ii] = np.sum(z_good * w) / np.sum(w)
+    
+    return z_interp
