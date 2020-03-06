@@ -155,7 +155,6 @@ def cinterp_tags(z, a, r, tags):
     tt = np.unique(tags)
     z_interp = z.copy()
 
-    print(tt[tt > 0])
     for t in tt[tt > 0]:
         mask = tags == t
         dmask = dilate(mask)
