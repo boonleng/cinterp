@@ -81,16 +81,16 @@ def cinterp(z, aa, rr, cells):
 
     # Good reflectivity values surrounding the cluster
     z_good = z_rolled[md]
-    
-    # Interpolation
-    z_interp = z_rolled.copy()
 
+    # Interpolation
+    z_interp_rolled = z_rolled.copy()
     for k, ii in enumerate(indices_bad):
         dx = x_bad[k] - x_good
         dy = y_bad[k] - y_good
         w = 1.0 / np.sqrt(dx * dx + dy * dy)
-        z_interp[ii] = np.sum(z_good * w) / np.sum(w)
-        
+        z_interp_rolled[ii] = np.nansum(z_good * w) / np.nansum(w)
+    z_interp = np.roll(z_interp_rolled, -roll_amount, axis=0)
+
     return z_interp
 
 
@@ -135,14 +135,14 @@ def mask2tags(mask):
     for ir in range(mask.shape[1]):
         if mask[-1, ir] and mask[0, ir]:
             c[c == c[-1, ir]] = c[0, ir]
-    
+
     # Relabel them so they are in 0, 1, 2, ...
     k = 1
     for t in np.unique(c):
         if t > 0:
             c[c == t] = k
             k += 1
-            
+
     return c
 
 def mask2cells(mask):
@@ -178,8 +178,8 @@ def cinterp_tags(z, a, r, tags):
 
         for k, ii in enumerate(sub_cells):
             dx = x_bad[k] - x_good
-            dy = y_bad[k] - y_good    
+            dy = y_bad[k] - y_good
             w = 1.0 / np.sqrt(dx * dx + dy * dy)
             z_interp[ii] = np.sum(z_good * w) / np.sum(w)
-    
+
     return z_interp
